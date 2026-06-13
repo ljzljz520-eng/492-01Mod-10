@@ -6,16 +6,12 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("user")
-public class User extends BaseEntity {
+@TableName("project")
+public class Project extends BaseEntity {
 
-    private String username;
+    private String projectName;
 
-    private String password;
-
-    private String nickname;
-
-    private String userRole;
+    private String projectCode;
 
     private Long enterpriseId;
 
@@ -25,5 +21,9 @@ public class User extends BaseEntity {
 
     private String laborCompanyName;
 
-    private String phone;
+    private String projectAddress;
+
+    private String projectStatus;
+
+    private String remark;
 }

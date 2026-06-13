@@ -26,8 +26,10 @@
         
         <div class="mb-4 p-3 bg-blue-50 rounded-lg mt-4">
           <p class="text-xs text-gray-600 mb-2">测试账号：</p>
-          <p class="text-xs text-gray-700">账号：<span class="font-semibold">admin</span></p>
-          <p class="text-xs text-gray-700">密码：<span class="font-semibold">123456</span></p>
+          <p class="text-xs text-gray-700">管理员：<span class="font-semibold">admin / 123456</span></p>
+          <p class="text-xs text-gray-700">现场主管：<span class="font-semibold">supervisor / 123456</span></p>
+          <p class="text-xs text-gray-700">劳务公司：<span class="font-semibold">labor / 123456</span></p>
+          <p class="text-xs text-gray-700">企业用户：<span class="font-semibold">enterprise / 123456</span></p>
         </div>
         
         <div class="mt-6">

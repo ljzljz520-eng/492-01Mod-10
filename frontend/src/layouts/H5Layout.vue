@@ -16,8 +16,9 @@
       <router-view :key="route.path" />
     </div>
     <van-tabbar v-model="activeTab" route fixed placeholder>
-      <van-tabbar-item icon="photo-o" to="/h5/file">文件</van-tabbar-item>
-      <van-tabbar-item icon="orders-o" to="/h5/work">工作</van-tabbar-item>
+      <van-tabbar-item icon="description-o" to="/h5/injury-report">工伤上报</van-tabbar-item>
+      <van-tabbar-item icon="orders-o" to="/h5/work">排班档案</van-tabbar-item>
+      <van-tabbar-item icon="apartment-o" to="/h5/project">项目</van-tabbar-item>
       <van-tabbar-item icon="user-o" to="/h5/user">用户</van-tabbar-item>
     </van-tabbar>
   </div>
@@ -33,15 +34,19 @@ const activeTab = ref(0)
 
 const navTitle = computed(() => {
   const titles = {
+    '/h5/injury-report': '工伤上报',
+    '/h5/work': '排班档案',
+    '/h5/project': '项目管理',
     '/h5/file': '文件管理',
-    '/h5/work': '工作管理',
     '/h5/user': '用户管理'
   }
-  return titles[route.path] || '工作管理系统'
+  if (route.path.startsWith('/h5/injury-report/')) {
+    return '工伤详情'
+  }
+  return titles[route.path] || '蓝领招聘排班平台'
 })
 
 const switchToPC = () => {
-  // 获取当前路径，将/h5替换为/pc
   const currentPath = route.path
   const pcPath = currentPath.replace('/h5', '/pc')
   router.push(pcPath)

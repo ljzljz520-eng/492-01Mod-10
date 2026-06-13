@@ -283,7 +283,9 @@ const list = ref([])
 const searchForm = reactive({
   workName: '',
   workStatus: '',
-  priority: ''
+  priority: '',
+  projectId: '',
+  injuryStatus: ''
 })
 
 const pagination = reactive({

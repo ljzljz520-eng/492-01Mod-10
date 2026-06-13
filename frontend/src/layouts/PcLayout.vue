@@ -3,7 +3,7 @@
     <el-container>
       <el-header class="bg-white shadow-sm">
         <div class="flex items-center justify-between h-full px-6">
-          <h1 class="text-xl font-bold text-gray-800">工作管理系统</h1>
+          <h1 class="text-xl font-bold text-gray-800">蓝领招聘排班平台 - 工伤上报管理系统</h1>
           <div class="flex items-center gap-4">
             <el-button 
               type="primary" 
@@ -19,19 +19,27 @@
         </div>
       </el-header>
       <el-container>
-        <el-aside width="200px" class="bg-white shadow-sm">
+        <el-aside width="220px" class="bg-white shadow-sm">
           <el-menu
             :default-active="activeMenu"
             router
             class="border-r-0"
           >
-            <el-menu-item index="/pc/file">
-              <el-icon><Document /></el-icon>
-              <span>文件管理</span>
+            <el-menu-item index="/pc/injury-report">
+              <el-icon><Warning /></el-icon>
+              <span>工伤上报</span>
             </el-menu-item>
             <el-menu-item index="/pc/work">
               <el-icon><Briefcase /></el-icon>
-              <span>工作管理</span>
+              <span>排班档案</span>
+            </el-menu-item>
+            <el-menu-item index="/pc/project">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>项目管理</span>
+            </el-menu-item>
+            <el-menu-item index="/pc/file">
+              <el-icon><Document /></el-icon>
+              <span>文件管理</span>
             </el-menu-item>
             <el-menu-item index="/pc/user">
               <el-icon><User /></el-icon>
@@ -50,14 +58,18 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Document, Briefcase, RefreshRight, User } from '@element-plus/icons-vue'
+import { Document, Briefcase, RefreshRight, User, Warning, OfficeBuilding } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => {
+  if (route.path.startsWith('/pc/injury-report/')) {
+    return '/pc/injury-report'
+  }
+  return route.path
+})
 
 const switchToH5 = () => {
-  // 获取当前路径，将/pc替换为/h5
   const currentPath = route.path
   const h5Path = currentPath.replace('/pc', '/h5')
   router.push(h5Path)

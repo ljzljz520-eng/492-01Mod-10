@@ -9,19 +9,16 @@ import com.scaffolding.service.WorkService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-/**
- * 工作管理服务实现类
- * 
- * @author scaffolding
- */
 @Service
 public class WorkServiceImpl extends ServiceImpl<WorkMapper, Work> implements WorkService {
 
     @Override
-    public Page<Work> pageQuery(Long current, Long size, String workName, String workStatus, String priority) {
+    public Page<Work> pageQuery(Long current, Long size, String workName, String workStatus, String priority,
+                                 Long projectId, String injuryStatus, Long userId, String userRole,
+                                 Long enterpriseId, Long laborCompanyId) {
         Page<Work> page = new Page<>(current, size);
         LambdaQueryWrapper<Work> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (StringUtils.hasText(workName)) {
             wrapper.like(Work::getWorkName, workName);
         }
@@ -31,7 +28,22 @@ public class WorkServiceImpl extends ServiceImpl<WorkMapper, Work> implements Wo
         if (StringUtils.hasText(priority)) {
             wrapper.eq(Work::getPriority, priority);
         }
-        
+        if (projectId != null) {
+            wrapper.eq(Work::getProjectId, projectId);
+        }
+        if (StringUtils.hasText(injuryStatus)) {
+            wrapper.eq(Work::getInjuryStatus, injuryStatus);
+        }
+
+        if ("enterprise".equals(userRole) && enterpriseId != null) {
+            wrapper.inSql(Work::getProjectId,
+                    "SELECT id FROM project WHERE enterprise_id = " + enterpriseId);
+        }
+        if ("labor".equals(userRole) && laborCompanyId != null) {
+            wrapper.inSql(Work::getProjectId,
+                    "SELECT id FROM project WHERE labor_company_id = " + laborCompanyId);
+        }
+
         wrapper.orderByDesc(Work::getCreateTime);
         return this.page(page, wrapper);
     }
