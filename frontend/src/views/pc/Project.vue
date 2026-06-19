@@ -75,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { projectApi } from '@/api/project'
 
@@ -93,23 +93,14 @@ const pagination = reactive({
   total: 0
 })
 
-const currentUser = computed(() => {
-  try {
-    const u = localStorage.getItem('user')
-    return u ? JSON.parse(u) : null
-  } catch { return null }
-})
-
 const loadData = async () => {
   loading.value = true
   try {
-    const user = currentUser.value
     const res = await projectApi.page({
       current: pagination.current,
       size: pagination.size,
       projectName: searchForm.projectName,
-      projectStatus: searchForm.projectStatus,
-      userId: user?.id
+      projectStatus: searchForm.projectStatus
     })
     if (res.code === 200) {
       tableData.value = res.data.records

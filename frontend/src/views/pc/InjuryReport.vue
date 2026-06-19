@@ -5,8 +5,7 @@
         <div class="flex items-center justify-between">
           <span class="text-xl font-bold text-gray-800">工伤上报管理</span>
           <div class="flex gap-2">
-            <el-button 
-              v-if="currentUser && (currentUser.userRole === 'supervisor' || currentUser.userRole === 'admin')"
+            <el-button
               type="danger" 
               @click="handleAdd"
               class="rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
@@ -222,7 +221,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Warning } from '@element-plus/icons-vue'
@@ -256,23 +255,16 @@ const conclusionForm = reactive({
   remark: ''
 })
 
-const currentUser = computed(() => {
-  try {
-    const u = localStorage.getItem('user')
-    return u ? JSON.parse(u) : null
-  } catch { return null }
-})
+
 
 const loadData = async () => {
   loading.value = true
   try {
-    const user = currentUser.value
     const res = await injuryReportApi.page({
       current: pagination.current,
       size: pagination.size,
       projectId: searchForm.projectId,
-      reportStatus: searchForm.reportStatus,
-      userId: user?.id
+      reportStatus: searchForm.reportStatus
     })
     if (res.code === 200) {
       tableData.value = res.data.records
@@ -288,8 +280,7 @@ const loadData = async () => {
 
 const loadProjects = async () => {
   try {
-    const user = currentUser.value
-    const res = await projectApi.list(user?.id)
+    const res = await projectApi.list()
     if (res.code === 200) {
       projectList.value = res.data
     }
@@ -331,12 +322,10 @@ const submitConclusion = async () => {
   if (!conclusionForm.result || !currentRow.value) return
   concluding.value = true
   try {
-    const user = currentUser.value
     const res = await injuryReportApi.processConclusion(
       currentRow.value.id,
       conclusionForm.result,
-      conclusionForm.remark,
-      user?.id
+      conclusionForm.remark
     )
     if (res.code === 200) {
       ElMessage.success('结论已出具，排班档案已同步更新')

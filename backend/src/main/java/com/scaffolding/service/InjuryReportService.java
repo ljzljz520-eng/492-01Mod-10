@@ -27,4 +27,6 @@ public interface InjuryReportService extends IService<InjuryReport> {
     InjuryMaterial addMaterial(InjuryMaterial material, Long userId, String userName);
 
     boolean removeMaterial(Long id);
+
+    boolean canUserAccessProject(Long projectId, Long enterpriseId, Long laborCompanyId);
 }

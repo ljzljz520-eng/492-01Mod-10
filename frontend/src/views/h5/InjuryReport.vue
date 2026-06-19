@@ -324,13 +324,6 @@ const shiftColumns = [
   { text: '夜班', value: '夜班' }
 ]
 
-const getCurrentUser = () => {
-  try {
-    const u = localStorage.getItem('user')
-    return u ? JSON.parse(u) : null
-  } catch { return null }
-}
-
 const loadData = async () => {
   if (refreshing.value || list.value.length === 0) {
     pagination.current = 1
@@ -342,12 +335,10 @@ const loadData = async () => {
   
   loading.value = true
   try {
-    const user = getCurrentUser()
     const res = await injuryReportApi.page({
       current: pagination.current,
       size: pagination.size,
-      reportStatus: searchForm.reportStatus,
-      userId: user?.id
+      reportStatus: searchForm.reportStatus
     })
     if (res.code === 200) {
       if (refreshing.value || pagination.current === 1) {
@@ -374,8 +365,7 @@ const loadData = async () => {
 
 const loadProjects = async () => {
   try {
-    const user = getCurrentUser()
-    const res = await projectApi.list(user?.id)
+    const res = await projectApi.list()
     if (res.code === 200) {
       projectList.value = res.data
     }
@@ -454,8 +444,7 @@ const handleSubmit = async () => {
   if (!formRef.value) return
   submitting.value = true
   try {
-    const user = getCurrentUser()
-    const res = await injuryReportApi.save(formData, user?.id)
+    const res = await injuryReportApi.save(formData)
     if (res.code === 200) {
       showToast({ type: 'success', message: '上报成功，请尽快上传证明材料' })
       popupVisible.value = false

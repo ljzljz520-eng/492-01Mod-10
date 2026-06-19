@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import com.scaffolding.entity.Project;
+import com.scaffolding.mapper.ProjectMapper;
+
 @Service
 public class InjuryReportServiceImpl extends ServiceImpl<InjuryReportMapper, InjuryReport> implements InjuryReportService {
 
@@ -27,6 +30,9 @@ public class InjuryReportServiceImpl extends ServiceImpl<InjuryReportMapper, Inj
 
     @Autowired
     private WorkMapper workMapper;
+
+    @Autowired
+    private ProjectMapper projectMapper;
 
     private static final Map<String, String> REQUIRED_MATERIALS = new LinkedHashMap<>();
     static {
@@ -131,9 +137,6 @@ public class InjuryReportServiceImpl extends ServiceImpl<InjuryReportMapper, Inj
             report.setReportUserName(userName);
             report.setReportTime(LocalDateTime.now());
             report.setReportStatus("pending");
-            if (report.getInjuryStatus() == null) {
-                report.setInjuryStatus("normal");
-            }
             this.save(report);
         } else {
             report.setUpdateTime(LocalDateTime.now());
@@ -228,6 +231,24 @@ public class InjuryReportServiceImpl extends ServiceImpl<InjuryReportMapper, Inj
         InjuryMaterial material = injuryMaterialMapper.selectById(id);
         if (material != null) {
             injuryMaterialMapper.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canUserAccessProject(Long projectId, Long enterpriseId, Long laborCompanyId) {
+        if (projectId == null) {
+            return true;
+        }
+        Project project = projectMapper.selectById(projectId);
+        if (project == null) {
+            return false;
+        }
+        if (enterpriseId != null && enterpriseId.equals(project.getEnterpriseId())) {
+            return true;
+        }
+        if (laborCompanyId != null && laborCompanyId.equals(project.getLaborCompanyId())) {
             return true;
         }
         return false;

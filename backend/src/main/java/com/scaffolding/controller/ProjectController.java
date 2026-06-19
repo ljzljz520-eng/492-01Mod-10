@@ -4,9 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scaffolding.common.PageResult;
 import com.scaffolding.common.Result;
 import com.scaffolding.entity.Project;
-import com.scaffolding.entity.User;
 import com.scaffolding.service.ProjectService;
-import com.scaffolding.service.UserService;
+import com.scaffolding.utils.UserContext;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +23,6 @@ public class ProjectController {
 
     @Autowired
     private ProjectService projectService;
-
-    @Autowired
-    private UserService userService;
 
     @PostMapping
     @ApiOperation("新增项目")
@@ -80,19 +76,11 @@ public class ProjectController {
 
     @GetMapping("/list")
     @ApiOperation("查询项目列表（不分页，用于下拉选择）")
-    public Result<List<Project>> list(@RequestParam(required = false) Long userId) {
-        Long enterpriseId = null;
-        Long laborCompanyId = null;
-        String userRole = null;
-        if (userId != null) {
-            User user = userService.getById(userId);
-            if (user != null) {
-                userRole = user.getUserRole();
-                enterpriseId = user.getEnterpriseId();
-                laborCompanyId = user.getLaborCompanyId();
-            }
-        }
-        Page<Project> page = projectService.pageQuery(1L, 1000L, null, null, userId, userRole, enterpriseId, laborCompanyId);
+    public Result<List<Project>> list() {
+        String userRole = UserContext.getUserRole();
+        Long enterpriseId = UserContext.getEnterpriseId();
+        Long laborCompanyId = UserContext.getLaborCompanyId();
+        Page<Project> page = projectService.pageQuery(1L, 1000L, null, null, null, userRole, enterpriseId, laborCompanyId);
         return Result.success(page.getRecords());
     }
 
@@ -102,20 +90,11 @@ public class ProjectController {
             @RequestParam(defaultValue = "1") Long current,
             @RequestParam(defaultValue = "10") Long size,
             @RequestParam(required = false) String projectName,
-            @RequestParam(required = false) String projectStatus,
-            @RequestParam(required = false) Long userId) {
-        Long enterpriseId = null;
-        Long laborCompanyId = null;
-        String userRole = null;
-        if (userId != null) {
-            User user = userService.getById(userId);
-            if (user != null) {
-                userRole = user.getUserRole();
-                enterpriseId = user.getEnterpriseId();
-                laborCompanyId = user.getLaborCompanyId();
-            }
-        }
-        Page<Project> page = projectService.pageQuery(current, size, projectName, projectStatus, userId, userRole, enterpriseId, laborCompanyId);
+            @RequestParam(required = false) String projectStatus) {
+        String userRole = UserContext.getUserRole();
+        Long enterpriseId = UserContext.getEnterpriseId();
+        Long laborCompanyId = UserContext.getLaborCompanyId();
+        Page<Project> page = projectService.pageQuery(current, size, projectName, projectStatus, null, userRole, enterpriseId, laborCompanyId);
         PageResult<Project> pageResult = new PageResult<>(page.getTotal(), page.getRecords(), page.getCurrent(), page.getSize());
         return Result.success(pageResult);
     }

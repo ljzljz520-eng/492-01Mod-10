@@ -446,13 +446,12 @@ const submitUpload = async () => {
   }
   uploading.value = true
   try {
-    const user = currentUser.value
     const res = await injuryReportApi.addMaterial({
       injuryReportId: reportId,
       materialType: uploadForm.materialType,
       materialName: uploadForm.materialName,
       fileName: uploadForm.fileName || uploadForm.materialName
-    }, user?.id)
+    })
     if (res.code === 200) {
       ElMessage.success('上传成功')
       uploadVisible.value = false
@@ -489,13 +488,12 @@ const openInsuranceForm = () => {
 const submitInsurance = async () => {
   insuranceSubmitting.value = true
   try {
-    const user = currentUser.value
     const res = await injuryReportApi.updateInsurance(reportId, {
       insuranceCompany: insuranceForm.insuranceCompany,
       insurancePolicyNo: insuranceForm.insurancePolicyNo,
       insuranceCoverage: insuranceForm.insuranceCoverage,
       insuranceRemark: insuranceForm.insuranceRemark
-    }, user?.id)
+    })
     if (res.code === 200) {
       ElMessage.success('保险资料补充成功')
       insuranceVisible.value = false
@@ -513,12 +511,10 @@ const submitConclusion = async () => {
   if (!conclusionForm.result) return
   concluding.value = true
   try {
-    const user = currentUser.value
     const res = await injuryReportApi.processConclusion(
       reportId,
       conclusionForm.result,
-      conclusionForm.remark,
-      user?.id
+      conclusionForm.remark
     )
     if (res.code === 200) {
       ElMessage.success('结论已出具，排班档案已同步更新')

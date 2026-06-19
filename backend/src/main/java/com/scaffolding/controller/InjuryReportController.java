@@ -5,16 +5,14 @@ import com.scaffolding.common.PageResult;
 import com.scaffolding.common.Result;
 import com.scaffolding.entity.InjuryMaterial;
 import com.scaffolding.entity.InjuryReport;
-import com.scaffolding.entity.User;
 import com.scaffolding.service.InjuryReportService;
-import com.scaffolding.service.UserService;
+import com.scaffolding.utils.UserContext;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -27,19 +25,14 @@ public class InjuryReportController {
     @Autowired
     private InjuryReportService injuryReportService;
 
-    @Autowired
-    private UserService userService;
-
     @PostMapping
     @ApiOperation("主管上报工伤")
-    public Result<InjuryReport> save(@RequestBody InjuryReport report, @RequestParam(required = false) Long userId) {
+    public Result<InjuryReport> save(@RequestBody InjuryReport report) {
         try {
-            String userName = "现场主管";
-            if (userId != null) {
-                User user = userService.getById(userId);
-                if (user != null) {
-                    userName = user.getNickname() != null ? user.getNickname() : user.getUsername();
-                }
+            Long userId = UserContext.getUserId();
+            String userName = UserContext.getUserName();
+            if (userId == null) {
+                return Result.error(401, "未登录");
             }
             InjuryReport saved = injuryReportService.submitReport(report, userId, userName);
             return Result.success("上报成功", saved);
@@ -51,16 +44,14 @@ public class InjuryReportController {
 
     @PutMapping("/{id}")
     @ApiOperation("更新工伤上报")
-    public Result<InjuryReport> update(@PathVariable Long id, @RequestBody InjuryReport report, @RequestParam(required = false) Long userId) {
+    public Result<InjuryReport> update(@PathVariable Long id, @RequestBody InjuryReport report) {
         try {
-            report.setId(id);
-            String userName = "现场主管";
-            if (userId != null) {
-                User user = userService.getById(userId);
-                if (user != null) {
-                    userName = user.getNickname() != null ? user.getNickname() : user.getUsername();
-                }
+            Long userId = UserContext.getUserId();
+            String userName = UserContext.getUserName();
+            if (userId == null) {
+                return Result.error(401, "未登录");
             }
+            report.setId(id);
             InjuryReport updated = injuryReportService.submitReport(report, userId, userName);
             return Result.success("更新成功", updated);
         } catch (Exception e) {
@@ -76,6 +67,9 @@ public class InjuryReportController {
         if (report == null) {
             return Result.error("记录不存在");
         }
+        if (!canViewProject(report.getProjectId())) {
+            return Result.error(403, "无权查看该项目数据");
+        }
         return Result.success(report);
     }
 
@@ -85,21 +79,16 @@ public class InjuryReportController {
             @RequestParam(defaultValue = "1") Long current,
             @RequestParam(defaultValue = "10") Long size,
             @RequestParam(required = false) Long projectId,
-            @RequestParam(required = false) String reportStatus,
-            @RequestParam(required = false) Long userId) {
-        Long enterpriseId = null;
-        Long laborCompanyId = null;
-        String userRole = null;
-        if (userId != null) {
-            User user = userService.getById(userId);
-            if (user != null) {
-                userRole = user.getUserRole();
-                enterpriseId = user.getEnterpriseId();
-                laborCompanyId = user.getLaborCompanyId();
-            }
-        }
-        Page<InjuryReport> page = injuryReportService.pageQuery(current, size, projectId, reportStatus, userId, userRole, enterpriseId, laborCompanyId);
-        PageResult<InjuryReport> pageResult = new PageResult<>(page.getTotal(), page.getRecords(), page.getCurrent(), page.getSize());
+            @RequestParam(required = false) String reportStatus) {
+        Long userId = UserContext.getUserId();
+        String userRole = UserContext.getUserRole();
+        Long enterpriseId = UserContext.getEnterpriseId();
+        Long laborCompanyId = UserContext.getLaborCompanyId();
+
+        Page<InjuryReport> page = injuryReportService.pageQuery(
+                current, size, projectId, reportStatus, userId, userRole, enterpriseId, laborCompanyId);
+        PageResult<InjuryReport> pageResult = new PageResult<>(
+                page.getTotal(), page.getRecords(), page.getCurrent(), page.getSize());
         return Result.success(pageResult);
     }
 
@@ -107,6 +96,9 @@ public class InjuryReportController {
     @ApiOperation("检查缺失材料")
     public Result<Map<String, Object>> checkMissingMaterials(@PathVariable Long id) {
         try {
+            if (!canViewReport(id)) {
+                return Result.error(403, "无权查看该项目数据");
+            }
             Map<String, Object> result = injuryReportService.checkMissingMaterials(id);
             return Result.success(result);
         } catch (Exception e) {
@@ -117,16 +109,15 @@ public class InjuryReportController {
 
     @PutMapping("/{id}/insurance")
     @ApiOperation("劳务公司补充保险资料")
-    public Result<InjuryReport> updateInsurance(@PathVariable Long id, @RequestBody InjuryReport report, @RequestParam(required = false) Long userId) {
+    public Result<InjuryReport> updateInsurance(@PathVariable Long id, @RequestBody InjuryReport report) {
         try {
-            report.setId(id);
-            String userName = "劳务公司";
-            if (userId != null) {
-                User user = userService.getById(userId);
-                if (user != null) {
-                    userName = user.getNickname() != null ? user.getNickname() : user.getUsername();
-                }
+            String userRole = UserContext.getUserRole();
+            if (!"labor".equals(userRole) && !"admin".equals(userRole)) {
+                return Result.error(403, "仅劳务公司或管理员可补充保险资料");
             }
+            Long userId = UserContext.getUserId();
+            String userName = UserContext.getUserName();
+            report.setId(id);
             InjuryReport updated = injuryReportService.updateInsuranceInfo(report, userId, userName);
             if (updated == null) {
                 return Result.error("记录不存在");
@@ -143,16 +134,14 @@ public class InjuryReportController {
     public Result<InjuryReport> processConclusion(
             @PathVariable Long id,
             @RequestParam String result,
-            @RequestParam(required = false) String resultRemark,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) String resultRemark) {
         try {
-            String userName = "管理员";
-            if (userId != null) {
-                User user = userService.getById(userId);
-                if (user != null) {
-                    userName = user.getNickname() != null ? user.getNickname() : user.getUsername();
-                }
+            String userRole = UserContext.getUserRole();
+            if (!"admin".equals(userRole)) {
+                return Result.error(403, "仅管理员可出具处理结论");
             }
+            Long userId = UserContext.getUserId();
+            String userName = UserContext.getUserName();
             InjuryReport report = injuryReportService.processConclusion(id, result, resultRemark, userId, userName);
             if (report == null) {
                 return Result.error("记录不存在");
@@ -168,6 +157,9 @@ public class InjuryReportController {
     @ApiOperation("获取证明材料列表")
     public Result<List<InjuryMaterial>> getMaterials(@PathVariable Long id) {
         try {
+            if (!canViewReport(id)) {
+                return Result.error(403, "无权查看该项目数据");
+            }
             List<InjuryMaterial> materials = injuryReportService.getMaterials(id);
             return Result.success(materials);
         } catch (Exception e) {
@@ -178,14 +170,12 @@ public class InjuryReportController {
 
     @PostMapping("/material")
     @ApiOperation("上传证明材料")
-    public Result<InjuryMaterial> addMaterial(@RequestBody InjuryMaterial material, @RequestParam(required = false) Long userId) {
+    public Result<InjuryMaterial> addMaterial(@RequestBody InjuryMaterial material) {
         try {
-            String userName = "上传人";
-            if (userId != null) {
-                User user = userService.getById(userId);
-                if (user != null) {
-                    userName = user.getNickname() != null ? user.getNickname() : user.getUsername();
-                }
+            Long userId = UserContext.getUserId();
+            String userName = UserContext.getUserName();
+            if (userId == null) {
+                return Result.error(401, "未登录");
             }
             InjuryMaterial saved = injuryReportService.addMaterial(material, userId, userName);
             return Result.success("上传成功", saved);
@@ -205,5 +195,23 @@ public class InjuryReportController {
             log.error("删除证明材料失败", e);
             return Result.error("删除失败：" + e.getMessage());
         }
+    }
+
+    private boolean canViewProject(Long projectId) {
+        String userRole = UserContext.getUserRole();
+        if ("admin".equals(userRole) || projectId == null) {
+            return true;
+        }
+        Long enterpriseId = UserContext.getEnterpriseId();
+        Long laborCompanyId = UserContext.getLaborCompanyId();
+        return injuryReportService.canUserAccessProject(projectId, enterpriseId, laborCompanyId);
+    }
+
+    private boolean canViewReport(Long reportId) {
+        InjuryReport report = injuryReportService.getDetail(reportId);
+        if (report == null) {
+            return false;
+        }
+        return canViewProject(report.getProjectId());
     }
 }

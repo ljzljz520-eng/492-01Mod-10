@@ -63,13 +63,6 @@ const pagination = reactive({
   total: 0
 })
 
-const getCurrentUser = () => {
-  try {
-    const u = localStorage.getItem('user')
-    return u ? JSON.parse(u) : null
-  } catch { return null }
-}
-
 const loadData = async () => {
   if (refreshing.value || list.value.length === 0) {
     pagination.current = 1
@@ -81,13 +74,11 @@ const loadData = async () => {
   
   loading.value = true
   try {
-    const user = getCurrentUser()
     const res = await projectApi.page({
       current: pagination.current,
       size: pagination.size,
       projectName: searchForm.projectName,
-      projectStatus: searchForm.projectStatus,
-      userId: user?.id
+      projectStatus: searchForm.projectStatus
     })
     if (res.code === 200) {
       if (refreshing.value || pagination.current === 1) {

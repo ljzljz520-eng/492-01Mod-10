@@ -3,10 +3,9 @@ package com.scaffolding.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scaffolding.common.PageResult;
 import com.scaffolding.common.Result;
-import com.scaffolding.entity.User;
 import com.scaffolding.entity.Work;
-import com.scaffolding.service.UserService;
 import com.scaffolding.service.WorkService;
+import com.scaffolding.utils.UserContext;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +22,6 @@ public class WorkController {
 
     @Autowired
     private WorkService workService;
-
-    @Autowired
-    private UserService userService;
 
     @PostMapping
     @ApiOperation("新增排班")
@@ -92,20 +88,11 @@ public class WorkController {
             @RequestParam(required = false) String workStatus,
             @RequestParam(required = false) String priority,
             @RequestParam(required = false) Long projectId,
-            @RequestParam(required = false) String injuryStatus,
-            @RequestParam(required = false) Long userId) {
-        Long enterpriseId = null;
-        Long laborCompanyId = null;
-        String userRole = null;
-        if (userId != null) {
-            User user = userService.getById(userId);
-            if (user != null) {
-                userRole = user.getUserRole();
-                enterpriseId = user.getEnterpriseId();
-                laborCompanyId = user.getLaborCompanyId();
-            }
-        }
-        Page<Work> page = workService.pageQuery(current, size, workName, workStatus, priority, projectId, injuryStatus, userId, userRole, enterpriseId, laborCompanyId);
+            @RequestParam(required = false) String injuryStatus) {
+        String userRole = UserContext.getUserRole();
+        Long enterpriseId = UserContext.getEnterpriseId();
+        Long laborCompanyId = UserContext.getLaborCompanyId();
+        Page<Work> page = workService.pageQuery(current, size, workName, workStatus, priority, projectId, injuryStatus, null, userRole, enterpriseId, laborCompanyId);
 
         PageResult<Work> pageResult = new PageResult<>(
                 page.getTotal(),

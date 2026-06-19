@@ -3,9 +3,11 @@ package com.scaffolding.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.scaffolding.common.PageResult;
 import com.scaffolding.common.Result;
+import com.scaffolding.config.LoginInterceptor;
 import com.scaffolding.entity.User;
 import com.scaffolding.exception.BusinessException;
 import com.scaffolding.service.UserService;
+import com.scaffolding.utils.UserContext;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 用户管理控制器
- * 
- * @author scaffolding
- */
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
 @Slf4j
 @RestController
 @RequestMapping("/user")
@@ -29,7 +29,7 @@ public class UserController {
 
     @PostMapping("/login")
     @ApiOperation("用户登录")
-    public Result<User> login(@RequestBody LoginRequest request) {
+    public Result<User> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         try {
             if (!StringUtils.hasText(request.getUsername())) {
                 return Result.error("用户名不能为空");
@@ -37,10 +37,14 @@ public class UserController {
             if (!StringUtils.hasText(request.getPassword())) {
                 return Result.error("密码不能为空");
             }
-            
+
             User user = userService.login(request.getUsername(), request.getPassword());
-            // 不返回密码
             user.setPassword(null);
+
+            HttpSession session = httpRequest.getSession(true);
+            session.setAttribute(LoginInterceptor.getSessionUserKey(), user);
+            session.setMaxInactiveInterval(1800);
+
             return Result.success("登录成功", user);
         } catch (BusinessException e) {
             return Result.error(e.getMessage());
@@ -48,6 +52,26 @@ public class UserController {
             log.error("登录失败", e);
             return Result.error("登录失败：" + e.getMessage());
         }
+    }
+
+    @PostMapping("/logout")
+    @ApiOperation("用户登出")
+    public Result<?> logout(HttpServletRequest httpRequest) {
+        HttpSession session = httpRequest.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        return Result.success("登出成功");
+    }
+
+    @GetMapping("/current")
+    @ApiOperation("获取当前登录用户")
+    public Result<User> currentUser() {
+        User user = UserContext.getUser();
+        if (user != null) {
+            return Result.success(user);
+        }
+        return Result.error(401, "未登录");
     }
 
     @GetMapping("/page")
@@ -58,10 +82,9 @@ public class UserController {
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String nickname) {
         Page<User> page = userService.pageQuery(current, size, username, nickname);
-        
-        // 不返回密码
+
         page.getRecords().forEach(user -> user.setPassword(null));
-        
+
         PageResult<User> pageResult = new PageResult<>(
                 page.getTotal(),
                 page.getRecords(),
@@ -81,12 +104,11 @@ public class UserController {
             if (!StringUtils.hasText(user.getPassword())) {
                 return Result.error("密码不能为空");
             }
-            
-            // 检查用户名是否已存在
+
             if (userService.checkUsernameExists(user.getUsername(), null)) {
                 return Result.error("用户名已存在，不能重复");
             }
-            
+
             userService.save(user);
             return Result.success("新增成功");
         } catch (Exception e) {
@@ -100,14 +122,13 @@ public class UserController {
     public Result<?> update(@PathVariable Long id, @RequestBody User user) {
         try {
             user.setId(id);
-            
+
             if (StringUtils.hasText(user.getUsername())) {
-                // 检查用户名是否已存在（排除当前用户）
                 if (userService.checkUsernameExists(user.getUsername(), id)) {
                     return Result.error("用户名已存在，不能重复");
                 }
             }
-            
+
             userService.updateById(user);
             return Result.success("更新成功");
         } catch (Exception e) {
@@ -135,7 +156,7 @@ public class UserController {
             if (!StringUtils.hasText(request.getNewPassword())) {
                 return Result.error("新密码不能为空");
             }
-            
+
             userService.resetPassword(id, request.getNewPassword());
             return Result.success("重置密码成功");
         } catch (BusinessException e) {
@@ -146,9 +167,6 @@ public class UserController {
         }
     }
 
-    /**
-     * 登录请求对象
-     */
     public static class LoginRequest {
         private String username;
         private String password;
@@ -170,9 +188,6 @@ public class UserController {
         }
     }
 
-    /**
-     * 重置密码请求对象
-     */
     public static class ResetPasswordRequest {
         private String newPassword;
 

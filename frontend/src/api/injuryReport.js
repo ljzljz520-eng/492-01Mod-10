@@ -1,20 +1,18 @@
 import request from '@/utils/request'
 
 export const injuryReportApi = {
-  save(data, userId) {
+  save(data) {
     return request({
       url: '/injury-report',
       method: 'post',
-      data,
-      params: userId ? { userId } : {}
+      data
     })
   },
-  update(id, data, userId) {
+  update(id, data) {
     return request({
       url: `/injury-report/${id}`,
       method: 'put',
-      data,
-      params: userId ? { userId } : {}
+      data
     })
   },
   getById(id) {
@@ -36,19 +34,18 @@ export const injuryReportApi = {
       method: 'get'
     })
   },
-  updateInsurance(id, data, userId) {
+  updateInsurance(id, data) {
     return request({
       url: `/injury-report/${id}/insurance`,
       method: 'put',
-      data,
-      params: userId ? { userId } : {}
+      data
     })
   },
-  processConclusion(id, result, resultRemark, userId) {
+  processConclusion(id, result, resultRemark) {
     return request({
       url: `/injury-report/${id}/conclusion`,
       method: 'put',
-      params: { result, resultRemark, userId }
+      params: { result, resultRemark }
     })
   },
   getMaterials(id) {
@@ -57,12 +54,11 @@ export const injuryReportApi = {
       method: 'get'
     })
   },
-  addMaterial(data, userId) {
+  addMaterial(data) {
     return request({
       url: '/injury-report/material',
       method: 'post',
-      data,
-      params: userId ? { userId } : {}
+      data
     })
   },
   deleteMaterial(id) {

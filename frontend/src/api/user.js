@@ -1,10 +1,6 @@
 import request from '@/utils/request'
 
-/**
- * 用户API
- */
 export const userApi = {
-  // 登录
   login(data) {
     return request({
       url: '/user/login',
@@ -12,7 +8,18 @@ export const userApi = {
       data
     })
   },
-  // 分页查询
+  logout() {
+    return request({
+      url: '/user/logout',
+      method: 'post'
+    })
+  },
+  current() {
+    return request({
+      url: '/user/current',
+      method: 'get'
+    })
+  },
   page(params) {
     return request({
       url: '/user/page',
@@ -20,7 +27,6 @@ export const userApi = {
       params
     })
   },
-  // 新增用户
   save(data) {
     return request({
       url: '/user',
@@ -28,7 +34,6 @@ export const userApi = {
       data
     })
   },
-  // 更新用户
   update(id, data) {
     return request({
       url: `/user/${id}`,
@@ -36,14 +41,12 @@ export const userApi = {
       data
     })
   },
-  // 删除用户
   delete(id) {
     return request({
       url: `/user/${id}`,
       method: 'delete'
     })
   },
-  // 重置密码
   resetPassword(id, newPassword) {
     return request({
       url: `/user/${id}/reset-password`,

@@ -27,11 +27,10 @@ export const projectApi = {
       method: 'get'
     })
   },
-  list(userId) {
+  list() {
     return request({
       url: '/project/list',
-      method: 'get',
-      params: userId ? { userId } : {}
+      method: 'get'
     })
   },
   page(params) {
